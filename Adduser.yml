@@ -1,0 +1,10 @@
+- hosts: 127.0.0.1
+  sudo: yes
+  gather_facts: no
+  tasks:
+     - include_vars: spoilers.yml
+     - name: add user dspace
+       remote_user: ubuntu
+       become: true
+       become_user: root
+       user: name=dspace password={{dspacepass}}
