@@ -1,0 +1,45 @@
+- hosts: 127.0.0.1
+  sudo: yes
+  gather_facts: no
+  tasks:
+     - stat:
+         path: /path/dspace
+       register: q
+
+     - name: Second Dspace Change dspace installation directory in /dspace-source/dspace-5.6-src-release/build.properties
+       replace:
+         dest: /dspace-source/dspace-5.6-src-release/build.properties
+         regexp: 'dspace.install.dir=/dspace'
+         replace: 'dspace.install.dir=/dspace1'
+       when: q.stat.isdir is not defined
+
+
+     - name: Second Dspace Replace database URL in /dspace-source/dspace-5.6-src-release/build.properties
+       replace:
+         dest: /dspace-source/dspace-5.6-src-release/build.properties
+         regexp: '{{dspacedburl}}'
+         replace: '{{dspacedburl1}}'
+       when: q.stat.isdir is not defined
+
+     - name: Replace dspace base URL in /dspace-source/dspace-5.6-src-release/build.properties
+       replace:
+         dest: /dspace-source/dspace-5.6-src-release/build.properties
+         regexp: 'dspace.baseUrl = http://localhost:8080'
+         replace: 'dspace.baseUrl = http://localhost:8181'
+       when: q.stat.isdir is not defined
+
+     - name: Replace solr server in /dspace-source/dspace-5.6-src-release/build.properties
+       replace:
+         dest: /dspace-source/dspace-5.6-src-release/build.properties
+         regexp: 'solr.server=http://localhost:8080/solr'
+         replace: 'solr.server=http://localhost:8181/solr'
+       when: q.stat.isdir is not defined
+
+     - name: Build the project with maven
+       command: mvn -U package chdir=/dspace-source/dspace-5.6-src-release
+       ignore_errors: yes
+       when: q.stat.isdir is not defined
+
+     - name: Run ant clean install
+       command: ant fresh_install chdir=/dspace-source/dspace-5.6-src-release/dspace/target/dspace-installer
+       when: q.stat.isdir is not defined

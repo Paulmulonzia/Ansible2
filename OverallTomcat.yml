@@ -1,0 +1,7 @@
+---
+- import_playbook: tomcat user and group.yml
+- import_playbook: tomcat1.yml
+- import_playbook: tomcat2.yml
+- import_playbook: tomcat3.yml
+- import_playbook: tomcat4.yml
+- import_playbook: tomcat5.yml

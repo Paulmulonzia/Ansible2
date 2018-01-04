@@ -1,0 +1,8 @@
+---
+- import_playbook: Dspace Dependencies.yml
+- import_playbook: Add user.yml
+- import_playbook: Dspace1.yml
+- import_playbook: Dspace2.yml
+- import_playbook: Dspace3.yml
+- import_playbook: Dspace4.yml
+- import_playbook: Dspace5.yml

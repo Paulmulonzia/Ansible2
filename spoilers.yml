@@ -1,0 +1,17 @@
+---
+dspacepass: dspace12
+
+dspacedbpass: db.password=dspace12
+dspacedburl: db.url=jdbc:postgresql://puppetdb.cow5u1ahccig.us-west-1.rds.amazonaws.com:5432/dspace
+
+dspacedbpass1: db.password=dspace13
+dspacedburl1: db.url=jdbc:postgresql://puppetdb.cow5u1ahccig.us-west-1.rds.amazonaws.com:5432/dspace1
+
+dspacedbpass2: db.password=dspace14
+dspacedburl2: db.url=jdbc:postgresql://puppetdb.cow5u1ahccig.us-west-1.rds.amazonaws.com:5432/dspace2
+
+dspacedbpass3: db.password=dspace15
+dspacedburl3: db.url=jdbc:postgresql://puppetdb.cow5u1ahccig.us-west-1.rds.amazonaws.com:5432/dspace3
+
+dspacedbpass4: db.password=dspace16
+dspacedburl4: db.url=jdbc:postgresql://puppetdb.cow5u1ahccig.us-west-1.rds.amazonaws.com:5432/dspace4

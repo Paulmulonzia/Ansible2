@@ -1,0 +1,45 @@
+- hosts: 127.0.0.1
+  sudo: yes
+  gather_facts: no
+  tasks:
+     - stat:
+         path: /path/dspace
+       register: p
+
+     - name: create directory
+       file: path=/dspace state=directory owner=dspace recurse=yes
+       when: p.stat.isdir is not defined
+
+     - name: Create dspace installation directory
+       file: path=/dspace-source state=directory mode=0755 recurse=yes
+       when: p.stat.isdir is not defined
+
+     - name: Install DSpace
+       get_url:
+          url: https://github.com/DSpace/DSpace/releases/download/dspace-5.6/dspace-5.6-src-release.tar.gz
+          dest: /dspace-source
+       when: p.stat.isdir is not defined
+
+     - name: Unarchive dspace dspace-5.6-src-release.tar.gz
+       unarchive:
+         src: /dspace-source/dspace-5.6-src-release.tar.gz
+         dest: /dspace-source/
+         remote_src: yes
+       when: p.stat.isdir is not defined
+
+     - include_vars: spoilers.yml
+     - name: Replace database URL in /dspace-source/dspace-5.6-src-release/build.properties
+       replace:
+         dest: /dspace-source/dspace-5.6-src-release/build.properties
+         regexp: 'db.url=jdbc:postgresql://localhost:5432/dspace'
+         replace: '{{dspacedburl}}'
+       when: p.stat.isdir is not defined
+       
+     - name: Build the project with maven
+       command: mvn -U package chdir=/dspace-source/dspace-5.6-src-release
+       ignore_errors: yes
+       when: p.stat.isdir is not defined
+
+     - name: Run ant clean install
+       command: ant fresh_install chdir=/dspace-source/dspace-5.6-src-release/dspace/target/dspace-installer
+       when: p.stat.isdir is not defined

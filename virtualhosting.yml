@@ -1,0 +1,120 @@
+---
+- hosts: ansibleslaves
+  tasks:
+
+     - name: create a file
+       file: path=/usr/local/apache/conf/workers.properties state=touch
+
+     - name: Edits workers.properties
+       blockinfile:
+         path: /usr/local/apache/conf/workers.properties
+         block: |
+           worker.list=tomcat,tomcat1,tomcat2,tomcat3,tomcat4
+
+           worker.tomcat.type=ajp13
+           worker.tomcat.port=8009
+           worker.tomcat.host=localhost
+
+           worker.tomcat1.type=ajp13
+           worker.tomcat1.port=8109
+           worker.tomcat1.host=localhost
+
+           worker.tomcat2.type=ajp13
+           worker.tomcat2.port=8209
+           worker.tomcat2.host=localhost
+
+           worker.tomcat3.type=ajp13
+           worker.tomcat3.port=8309
+           worker.tomcat3.host=localhost
+
+           worker.tomcat4.type=ajp13
+           worker.tomcat4.port=8409
+           worker.tomcat4.host=localhost
+
+     - name: delete the ansible marker at beginning of file
+       lineinfile:
+         dest: /usr/local/apache/conf/workers.properties
+         regexp: "# BEGIN ANSIBLE MANAGED BLOCK"
+         state: absent
+
+     - name: delete ansible marker at the end of file
+       lineinfile:
+         dest: /usr/local/apache/conf/workers.properties
+         regexp: "# END ANSIBLE MANAGED BLOCK"
+         state: absent
+
+     - name: Add configuration to httpd.conf
+       blockinfile:
+         path: /usr/local/apache/conf/httpd.conf
+         block: |
+            LoadModule    jk_module  modules/mod_jk.so
+            JkWorkersFile conf/workers.properties
+            JkLogFile     logs/mod_jk.log
+            JkLogLevel    emerg
+            JkOptions     +ForwardKeySize +ForwardURICompat -ForwardDirectories
+            JkRequestLogFormat     "%w %V %T"
+
+            LoadModule rewrite_module modules/mod_rewrite.so            
+
+            Listen 80
+            NameVirtualHost *:80
+            <VirtualHost *:80>
+              ServerName ansible.dddke.net
+              RewriteEngine on
+              RewriteCond %{REQUEST_URI} ^/$
+              RewriteRule ^/(.*)$ /xmlui/$1 [l,PT]
+              JkMount  /xmlui* tomcat
+            </VirtualHost>
+
+            
+            <VirtualHost *:80>
+              ServerName ansible1.dddke.net
+              RewriteEngine on
+              RewriteCond %{REQUEST_URI} ^/$
+              RewriteRule ^/(.*)$ /xmlui/$1 [l,PT]
+              JkMount  /xmlui* tomcat1
+            </VirtualHost>
+
+            
+            <VirtualHost *:80>
+              ServerName ansible2.dddke.net
+              RewriteEngine on
+              RewriteCond %{REQUEST_URI} ^/$
+              RewriteRule ^/(.*)$ /xmlui/$1 [l,PT]
+              JkMount  /xmlui* tomcat2
+            </VirtualHost>
+
+            <VirtualHost *:80>
+              ServerName ansible3.dddke.net
+              RewriteEngine on
+              RewriteCond %{REQUEST_URI} ^/$
+              RewriteRule ^/(.*)$ /xmlui/$1 [l,PT]
+              JkMount  /xmlui* tomcat3
+            </VirtualHost>
+
+            
+            <VirtualHost *:80>
+              ServerName ansible4.dddke.net
+              RewriteEngine on
+              RewriteCond %{REQUEST_URI} ^/$
+              RewriteRule ^/(.*)$ /xmlui/$1 [l,PT]
+              JkMount  /xmlui* tomcat4
+            </VirtualHost>
+
+            JkMount  /xmlui* tomcat
+            JkMount  /xmlui* tomcat1
+            JkMount  /xmlui* tomcat2
+            JkMount  /xmlui* tomcat3
+            JkMount  /xmlui* tomcat4
+
+     - name: delete the ansible marker at beginning of file
+       lineinfile:
+         dest: /usr/local/apache/conf/httpd.conf
+         regexp: "# BEGIN ANSIBLE MANAGED BLOCK"
+         state: absent
+
+     - name: delete ansible marker at the end of file
+       lineinfile:
+         dest: /usr/local/apache/conf/httpd.conf
+         regexp: "# END ANSIBLE MANAGED BLOCK"
+         state: absent

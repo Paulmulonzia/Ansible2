@@ -1,0 +1,233 @@
+---
+- import_playbook: ApacheTomcatDependencies.yml
+- hosts: 127.0.0.1
+  tasks:
+     - name: Download Apache Httpd package
+       get_url:
+          url: http://www.gtlib.gatech.edu/pub/apache//httpd/httpd-2.4.29.tar.gz
+          dest: /home/ubuntu
+
+     - name: Unarchive Apache HTTPD Package
+       unarchive:
+         src: /home/ubuntu/httpd-2.4.29.tar.gz
+         dest: /home/ubuntu
+         remote_src: yes
+
+     - name: Install Apache httpd
+       command: ./configure --prefix=/usr/local/apache    --enable-rewrite=shared  --enable-proxy=shared
+       args:
+         chdir: /home/ubuntu/httpd-2.4.29
+
+
+     - name: Install Apache httpd
+       command: make
+       args:
+         chdir: /home/ubuntu/httpd-2.4.29
+
+     - name: Install Apache httpd
+       command: make install
+       args:
+         chdir: /home/ubuntu/httpd-2.4.29
+
+
+     - name: Start Apache
+       shell: |
+            /usr/local/apache/bin/apachectl
+            sed -i '$i'"$(echo '/usr/local/apache/bin/apachectl')" /etc/rc.local
+
+
+     - name: Download Mod_Jk Installation Package
+       get_url:
+          url: http://mirrors.ibiblio.org/apache/tomcat/tomcat-connectors/jk/tomcat-connectors-1.2.42-src.tar.gz
+          dest: /home/ubuntu
+
+     - name: Unarchive Mod_jk Package
+       unarchive:
+         src: /home/ubuntu/tomcat-connectors-1.2.42-src.tar.gz
+         dest: /home/ubuntu
+         remote_src: yes
+
+     - name: Install Mod_jk connector
+       command: ./configure    --with-apxs=/usr/local/apache/bin/apxs
+       args:
+         chdir: /home/ubuntu/tomcat-connectors-1.2.42-src/native
+
+
+     - name: Install Mod_jk Connector
+       command: make
+       args:
+         chdir: /home/ubuntu/tomcat-connectors-1.2.42-src/native
+
+     - name: Install Mod_jk Connector
+       command: make install
+       args:
+         chdir: /home/ubuntu/tomcat-connectors-1.2.42-src/native
+
+     - file:
+          path: /etc/init.d/apachehttpd
+          state: touch
+          mode: 0777
+
+     - name: create a file
+       file: path=/usr/local/apache/conf/workers.properties state=touch
+
+     - name: Edits workers.properties
+       blockinfile:
+         path: /usr/local/apache/conf/workers.properties
+         block: |
+           worker.list=tomcat,tomcat1,tomcat2,tomcat3,tomcat4
+
+           worker.tomcat.type=ajp13
+           worker.tomcat.port=8009
+           worker.tomcat.host=localhost
+
+           worker.tomcat1.type=ajp13
+           worker.tomcat1.port=8109
+           worker.tomcat1.host=localhost
+
+           worker.tomcat2.type=ajp13
+           worker.tomcat2.port=8209
+           worker.tomcat2.host=localhost
+
+           worker.tomcat3.type=ajp13
+           worker.tomcat3.port=8309
+           worker.tomcat3.host=localhost
+
+           worker.tomcat4.type=ajp13
+           worker.tomcat4.port=8409
+           worker.tomcat4.host=localhost
+
+     - name: delete the ansible marker at beginning of file
+       lineinfile:
+         dest: /usr/local/apache/conf/workers.properties
+         regexp: "# BEGIN ANSIBLE MANAGED BLOCK"
+         state: absent
+
+     - name: delete ansible marker at the end of file
+       lineinfile:
+         dest: /usr/local/apache/conf/workers.properties
+         regexp: "# END ANSIBLE MANAGED BLOCK"
+         state: absent
+
+     - name: Add configuration to httpd.conf
+       blockinfile:
+         path: /usr/local/apache/conf/httpd.conf
+         block: |
+            LoadModule    jk_module  modules/mod_jk.so
+            JkWorkersFile conf/workers.properties
+            JkLogFile     logs/mod_jk.log
+            JkLogLevel    emerg
+            JkOptions     +ForwardKeySize +ForwardURICompat -ForwardDirectories
+            JkRequestLogFormat     "%w %V %T"
+
+            LoadModule rewrite_module modules/mod_rewrite.so            
+
+            Listen 80
+            NameVirtualHost *:80
+            <VirtualHost *:80>
+              ServerName ansible.dddke.net
+              RewriteEngine on
+              RewriteCond %{REQUEST_URI} ^/$
+              RewriteRule ^/(.*)$ /xmlui/$1 [l,PT]
+              JkMount  /xmlui* tomcat
+            </VirtualHost>
+
+            
+            <VirtualHost *:80>
+              ServerName ansible1.dddke.net
+              RewriteEngine on
+              RewriteCond %{REQUEST_URI} ^/$
+              RewriteRule ^/(.*)$ /xmlui/$1 [l,PT]
+              JkMount  /xmlui* tomcat1
+            </VirtualHost>
+
+            
+            <VirtualHost *:80>
+              ServerName ansible2.dddke.net
+              RewriteEngine on
+              RewriteCond %{REQUEST_URI} ^/$
+              RewriteRule ^/(.*)$ /xmlui/$1 [l,PT]
+              JkMount  /xmlui* tomcat2
+            </VirtualHost>
+
+            <VirtualHost *:80>
+              ServerName ansible3.dddke.net
+              RewriteEngine on
+              RewriteCond %{REQUEST_URI} ^/$
+              RewriteRule ^/(.*)$ /xmlui/$1 [l,PT]
+              JkMount  /xmlui* tomcat3
+            </VirtualHost>
+
+            
+            <VirtualHost *:80>
+              ServerName ansible4.dddke.net
+              RewriteEngine on
+              RewriteCond %{REQUEST_URI} ^/$
+              RewriteRule ^/(.*)$ /xmlui/$1 [l,PT]
+              JkMount  /xmlui* tomcat4
+            </VirtualHost>
+
+            JkMount  /xmlui* tomcat
+            JkMount  /xmlui* tomcat1
+            JkMount  /xmlui* tomcat2
+            JkMount  /xmlui* tomcat3
+            JkMount  /xmlui* tomcat4
+
+     - name: delete the ansible marker at beginning of file
+       lineinfile:
+         dest: /usr/local/apache/conf/httpd.conf
+         regexp: "# BEGIN ANSIBLE MANAGED BLOCK"
+         state: absent
+
+     - name: delete ansible marker at the end of file
+       lineinfile:
+         dest: /usr/local/apache/conf/httpd.conf
+         regexp: "# END ANSIBLE MANAGED BLOCK"
+         state: absent
+
+     - name: Inserts Configuration settings into apachehttpd.service file
+       shell: |
+              echo '#!/bin/bash' >> /etc/init.d/apachehttpd
+              echo  '### BEGIN INIT INFO' >> /etc/init.d/apachehttpd
+              echo  '# Provides:        apachehttpd' >> /etc/init.d/apachehttpd
+              echo  '# Required-Start:  $network' >> /etc/init.d/apachehttpd
+              echo  '# Required-Stop:   $network' >> /etc/init.d/apachehttpd
+              echo  '# Default-Start:   2 3 4 5' >> /etc/init.d/apachehttpd
+              echo  '# Default-Stop:    0 1 6' >> /etc/init.d/apachehttpd
+              echo  '# Short-Description: Start/Stop apachehttpd server' >> /etc/init.d/apachehttpd
+              echo  '### END INIT INFO' >> /etc/init.d/apachehttpd
+              echo  '' >> /etc/init.d/apachehttpd
+              echo  'PATH=/sbin:/bin:/usr/sbin:/usr/bin' >> /etc/init.d/apachehttpd
+              echo  '' >> /etc/init.d/apachehttpd
+              echo  'start() {' >> /etc/init.d/apachehttpd
+              echo  ' /usr/local/apache/bin/apachectl start' >> /etc/init.d/apachehttpd
+              echo  '}' >> /etc/init.d/apachehttpd
+              echo  '' >> /etc/init.d/apachehttpd
+              echo  'stop() {' >> /etc/init.d/apachehttpd
+              echo  ' /usr/local/apache/bin/apachectl stop' >> /etc/init.d/apachehttpd
+              echo  '}' >> /etc/init.d/apachehttpd
+              echo  '' >> /etc/init.d/apachehttpd
+              echo  'case $1 in' >> /etc/init.d/apachehttpd
+              echo  '  start|stop) $1;;' >> /etc/init.d/apachehttpd
+              echo  '  restart) stop; start;;' >> /etc/init.d/apachehttpd
+              echo  '  *) echo "Run as $0 <start|stop|restart>"; exit 1;;' >> /etc/init.d/apachehttpd
+              echo  'esac' >> /etc/init.d/apachehttpd
+
+
+     - name: Make apachehttpd service file executable
+       command: chmod +x /etc/init.d/apachehttpd
+
+     - name: Update Rc Defaults
+       command: update-rc.d tomcat4 defaults
+
+     - name: Starts apache
+       command: service apachehttpd start
+
+     - name: Start Apache and Tomcat automatically on stop/start
+       shell: |
+            sed -i '$i'"$(echo 'service apachehttpd start')" /etc/rc.local
+            sed -i '$i'"$(echo 'service tomcat start')" /etc/rc.local
+            sed -i '$i'"$(echo 'service tomcat1 start')" /etc/rc.local
+            sed -i '$i'"$(echo 'service tomcat2 start')" /etc/rc.local
+            sed -i '$i'"$(echo 'service tomcat3 start')" /etc/rc.local
+            sed -i '$i'"$(echo 'service tomcat4 start')" /etc/rc.local

@@ -1,0 +1,122 @@
+---
+- hosts: 127.0.0.1
+  tasks:
+     - name: Create Fifth Tomcat
+       file:
+         path: /opt/tomcat4
+         mode: 0755
+         state: directory
+
+     - name: Copies Conf, logs, webapps, temp, work folders
+       shell: |
+           cp -a /opt/tomcat/conf /opt/tomcat4
+           cp -a /opt/tomcat/logs /opt/tomcat4
+           cp -a /opt/tomcat/webapps /opt/tomcat4
+           cp -a /opt/tomcat/temp /opt/tomcat4
+           cp -a /opt/tomcat/work /opt/tomcat4
+
+
+     - name: Remove PID file from temp
+       shell: rm /opt/tomcat4/temp/tomcat.pid
+       ignore_errors: yes
+
+     - name: Change Server shutdown port in Server.xml in tomcat4
+       replace:
+         dest: /opt/tomcat4/conf/server.xml
+         regexp: 'Server port="8005"'
+         replace: 'Server port="8405"'
+
+
+     - name: Change HTTP Connector port in tomcat4
+       replace:
+         dest: /opt/tomcat4/conf/server.xml
+         regexp: 'Connector port="8080"'
+         replace: 'Connector port="8484"'
+
+
+     - name: Change AJP connector in tomcat4
+       replace:
+         dest: /opt/tomcat4/conf/server.xml
+         regexp: 'Connector port="8009"'
+         replace: 'Connector port="8409"'
+
+     - file:
+          path: /opt/startup4.sh
+          state: touch
+          mode: 0777
+
+     - name: Edits startup4.sh
+       blockinfile:
+         path: /opt/startup4.sh
+         block: |
+            #!/bin/bash
+            export CATALINA_BASE=/opt/tomcat4
+               cd /opt/tomcat/bin
+               ./startup.sh
+
+     - file:
+          path: /opt/shutdown4.sh
+          state: touch
+          mode: 0777
+          
+     - name: Edits Shutdown4.sh
+       blockinfile:
+         path: /opt/shutdown4.sh
+         block: |
+            #!/bin/bash
+            export CATALINA_BASE=/opt/tomcat4
+               cd /opt/tomcat/bin
+               ./shutdoiwn.sh
+
+     - file:
+          path: /etc/init.d/tomcat4
+          state: touch
+          mode: 0777
+
+     - name: Inserts Configuration settings into tomcat4.service file
+       shell: |
+              echo '#!/bin/bash' >> /etc/init.d/tomcat4
+              echo  '### BEGIN INIT INFO' >> /etc/init.d/tomcat4
+              echo  '# Provides:        tomcat7.4' >> /etc/init.d/tomcat4
+              echo  '# Required-Start:  $network' >> /etc/init.d/tomcat4
+              echo  '# Required-Stop:   $network' >> /etc/init.d/tomcat4
+              echo  '# Default-Start:   2 3 4 5' >> /etc/init.d/tomcat4
+              echo  '# Default-Stop:    0 1 6' >> /etc/init.d/tomcat4
+              echo  '# Short-Description: Start/Stop Tomcat4 server' >> /etc/init.d/tomcat4
+              echo  '### END INIT INFO' >> /etc/init.d/tomcat4
+              echo  '' >> /etc/init.d/tomcat4
+              echo  'PATH=/sbin:/bin:/usr/sbin:/usr/bin' >> /etc/init.d/tomcat4
+              echo  '' >> /etc/init.d/tomcat4
+              echo  'start() {' >> /etc/init.d/tomcat4
+              echo  ' sh /opt/startup4.sh' >> /etc/init.d/tomcat4
+              echo  '}' >> /etc/init.d/tomcat4
+              echo  '' >> /etc/init.d/tomcat4
+              echo  'stop() {' >> /etc/init.d/tomcat4
+              echo  ' sh /opt/shutdown4.sh' >> /etc/init.d/tomcat4
+              echo  '}' >> /etc/init.d/tomcat4
+              echo  '' >> /etc/init.d/tomcat4
+              echo  'case $1 in' >> /etc/init.d/tomcat4
+              echo  '  start|stop) $1;;' >> /etc/init.d/tomcat4
+              echo  '  restart) stop; start;;' >> /etc/init.d/tomcat4
+              echo  '  *) echo "Run as $0 <start|stop|restart>"; exit 1;;' >> /etc/init.d/tomcat4
+              echo  'esac' >> /etc/init.d/tomcat4
+
+     - name: Update xmlui.xml file
+       replace:
+         dest: /opt/tomcat4/conf/Catalina/localhost/xmlui.xml
+         regexp:  'docBase="/dspace/webapps/xmlui'
+         replace:  'docBase="/dspace4/webapps/xmlui'
+    
+
+     - name: Make tomcat service file executable
+       command: chmod +x /etc/init.d/tomcat4
+
+     - name: Update Rc Defaults
+       command: update-rc.d tomcat4 defaults
+
+     - name: Starts Tomcat4
+       command: service tomcat4 start
+
+
+     - name: Enables port 8484 through the firewall
+       command: ufw allow 8484

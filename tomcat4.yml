@@ -1,0 +1,122 @@
+---
+- hosts: 127.0.0.1
+  tasks:   
+     - name: install Fourth Tomcat
+       file:
+         path: /opt/tomcat3
+         mode: 0755
+         state: directory
+
+     - name: Copies Conf, logs, webapps, temp, work folders
+       shell: |
+           cp -a /opt/tomcat/conf /opt/tomcat3
+           cp -a /opt/tomcat/logs /opt/tomcat3
+           cp -a /opt/tomcat/webapps /opt/tomcat3
+           cp -a /opt/tomcat/temp /opt/tomcat3
+           cp -a /opt/tomcat/work /opt/tomcat3
+
+
+     - name: Remove PID file from temp
+       shell: rm /opt/tomcat3/temp/tomcat.pid
+       ignore_errors: yes
+
+     - name: Change Server shutdown port in Server.xml in tomcat3
+       replace:
+         dest: /opt/tomcat3/conf/server.xml
+         regexp: 'Server port="8005"'
+         replace: 'Server port="8305"'
+
+
+     - name: Change HTTP Connector port in tomcat3
+       replace:
+         dest: /opt/tomcat3/conf/server.xml
+         regexp: 'Connector port="8080"'
+         replace: 'Connector port="8383"'
+
+
+     - name: Change AJP connector in tomcat3
+       replace:
+         dest: /opt/tomcat3/conf/server.xml
+         regexp: 'Connector port="8009"'
+         replace: 'Connector port="8309"'
+
+     - file:
+          path: /opt/startup3.sh
+          state: touch
+          mode: 0777
+
+     - name: Edits startup3.sh
+       blockinfile:
+         path: /opt/startup3.sh
+         block: |
+            #!/bin/bash
+            export CATALINA_BASE=/opt/tomcat3
+               cd /opt/tomcat/bin
+               ./startup.sh
+
+     - file:
+          path: /opt/shutdown3.sh
+          state: touch
+          mode: 0777
+          
+     - name: Edits Shutdown3.sh
+       blockinfile:
+         path: /opt/shutdown3.sh
+         block: |
+            #!/bin/bash
+            export CATALINA_BASE=/opt/tomcat3
+               cd /opt/tomcat/bin
+               ./shutdown.sh
+
+     - file:
+          path: /etc/init.d/tomcat3
+          state: touch
+          mode: 0777
+
+     - name: Inserts Configuration settings into tomcat3.service file
+       shell: |
+              echo '#!/bin/bash' >> /etc/init.d/tomcat3
+              echo  '### BEGIN INIT INFO' >> /etc/init.d/tomcat3
+              echo  '# Provides:        tomcat7.3' >> /etc/init.d/tomcat3
+              echo  '# Required-Start:  $network' >> /etc/init.d/tomcat3
+              echo  '# Required-Stop:   $network' >> /etc/init.d/tomcat3
+              echo  '# Default-Start:   2 3 4 5' >> /etc/init.d/tomcat3
+              echo  '# Default-Stop:    0 1 6' >> /etc/init.d/tomcat3
+              echo  '# Short-Description: Start/Stop Tomcat3 server' >> /etc/init.d/tomcat3
+              echo  '### END INIT INFO' >> /etc/init.d/tomcat3
+              echo  '' >> /etc/init.d/tomcat3
+              echo  'PATH=/sbin:/bin:/usr/sbin:/usr/bin' >> /etc/init.d/tomcat3
+              echo  '' >> /etc/init.d/tomcat3
+              echo  'start() {' >> /etc/init.d/tomcat3
+              echo  ' sh /opt/startup3.sh' >> /etc/init.d/tomcat3
+              echo  '}' >> /etc/init.d/tomcat3
+              echo  '' >> /etc/init.d/tomcat3
+              echo  'stop() {' >> /etc/init.d/tomcat3
+              echo  ' sh /opt/shutdown3.sh' >> /etc/init.d/tomcat3
+              echo  '}' >> /etc/init.d/tomcat3
+              echo  '' >> /etc/init.d/tomcat3
+              echo  'case $1 in' >> /etc/init.d/tomcat3
+              echo  '  start|stop) $1;;' >> /etc/init.d/tomcat3
+              echo  '  restart) stop; start;;' >> /etc/init.d/tomcat3
+              echo  '  *) echo "Run as $0 <start|stop|restart>"; exit 1;;' >> /etc/init.d/tomcat3
+              echo  'esac' >> /etc/init.d/tomcat3
+
+     - name: Update xmlui.xml file
+       replace:
+         dest: /opt/tomcat3/conf/Catalina/localhost/xmlui.xml
+         regexp:  'docBase="/dspace/webapps/xmlui'
+         replace:  'docBase="/dspace3/webapps/xmlui'
+
+    
+     - name: Make tomcat service file executable
+       command: chmod +x /etc/init.d/tomcat3
+
+     - name: Update Rc Defaults
+       command: update-rc.d tomcat3 defaults
+
+     - name: Starts Tomcat3
+       command: service tomcat3 start
+
+
+     - name: Enables port 8383 through the firewall
+       command: ufw allow 8383

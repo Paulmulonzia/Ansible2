@@ -1,0 +1,22 @@
+- hosts: 127.0.0.1
+  sudo: yes
+  gather_facts: no
+  tasks:
+     - name: Installs Java
+       remote_user: ubuntu
+       become: true
+       become_user: root
+       apt: pkg=default-jdk state=installed update_cache=true
+
+
+     - name: Installs ant
+       remote_user: ubuntu
+       become: true
+       become_user: root
+       apt: pkg=ant state=installed update_cache=true
+
+     - name: Installs maven
+       remote_user: ubuntu
+       become: true
+       become_user: root
+       apt: pkg=maven state=installed update_cache=true

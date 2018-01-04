@@ -1,0 +1,101 @@
+---
+- hosts: 127.0.0.1
+  tasks:
+     - name: Download Tomcat Installation Package
+       get_url:
+          url: http://www-us.apache.org/dist/tomcat/tomcat-8/v8.5.23/bin/apache-tomcat-8.5.23.tar.gz
+          dest: /opt
+
+     - name: Unarchive Tomcat Package
+       unarchive:
+         src: /opt/apache-tomcat-8.5.23.tar.gz
+         dest: /opt/
+         remote_src: yes
+ 
+     - name: Renames Tomcat Folder
+       command: mv /opt/apache-tomcat-8.5.23 /opt/tomcat
+
+     - file: 
+         path: /opt/tomcat
+         owner: tomcat
+         group: tomcat
+         mode: 0755
+
+     - file:
+         path: /etc/init.d/tomcat
+         state: touch
+         
+     - name: Inserts Configuration settings into tomcat.service file
+       shell: | 
+              echo '#!/bin/bash' >> /etc/init.d/tomcat
+              echo  '### BEGIN INIT INFO' >> /etc/init.d/tomcat
+              echo  '# Provides:    	tomcat7' >> /etc/init.d/tomcat
+              echo  '# Required-Start:  $network' >> /etc/init.d/tomcat
+              echo  '# Required-Stop:   $network' >> /etc/init.d/tomcat
+              echo  '# Default-Start:   2 3 4 5' >> /etc/init.d/tomcat
+              echo  '# Default-Stop:	0 1 6' >> /etc/init.d/tomcat
+              echo  '# Short-Description: Start/Stop Tomcat server' >> /etc/init.d/tomcat
+              echo  '### END INIT INFO' >> /etc/init.d/tomcat
+              echo  '' >> /etc/init.d/tomcat
+              echo  'PATH=/sbin:/bin:/usr/sbin:/usr/bin' >> /etc/init.d/tomcat
+              echo  '' >> /etc/init.d/tomcat
+              echo  'start() {' >> /etc/init.d/tomcat
+              echo  ' sh /opt/tomcat/bin/startup.sh' >> /etc/init.d/tomcat
+              echo  '}' >> /etc/init.d/tomcat
+              echo  '' >> /etc/init.d/tomcat
+              echo  'stop() {' >> /etc/init.d/tomcat
+              echo  ' sh /opt/tomcat/bin/shutdown.sh' >> /etc/init.d/tomcat
+              echo  '}' >> /etc/init.d/tomcat
+              echo  '' >> /etc/init.d/tomcat
+              echo  'case $1 in' >> /etc/init.d/tomcat
+              echo  '  start|stop) $1;;' >> /etc/init.d/tomcat
+              echo  '  restart) stop; start;;' >> /etc/init.d/tomcat
+              echo  '  *) echo "Run as $0 <start|stop|restart>"; exit 1;;' >> /etc/init.d/tomcat
+              echo  "esac" >> /etc/init.d/tomcat
+
+     - name: create directory
+       file: path=/opt/tomcat/conf/Catalina state=directory owner=dspace recurse=yes
+
+     - name: create directory
+       file: path=/opt/tomcat/conf/Catalina/localhost state=directory owner=dspace recurse=yes
+
+     - name: create a file
+       file: path=/opt/tomcat/conf/Catalina/localhost/xmlui.xml state=touch mode=666
+
+     - name: configure tomcat to read from dspace webapps
+       blockinfile:
+         dest: /opt/tomcat/conf/Catalina/localhost/xmlui.xml
+         content: |
+           <?xml version='1.0'?>
+           <Context
+             docBase="/dspace/webapps/xmlui"
+             reloadable="true"
+             cachingAllowed="false"/>
+         state: present
+         insertafter: BOF
+
+     - name: delete the ansible marker at beginning of file
+       lineinfile:
+         dest: /opt/tomcat/conf/Catalina/localhost/xmlui.xml
+         regexp: "# BEGIN ANSIBLE MANAGED BLOCK"
+         state: absent
+
+     - name: delete ansible marker at the end of file
+       lineinfile:
+         dest: /opt/tomcat/conf/Catalina/localhost/xmlui.xml
+         regexp: "# END ANSIBLE MANAGED BLOCK"
+         state: absent
+
+         
+     - name: Make tomcat service file executable
+       command: chmod +x /etc/init.d/tomcat
+
+     - name: Update Rc Defaults
+       command: update-rc.d tomcat defaults
+
+     - name: Starts Tomcat
+       command: service tomcat start
+
+
+     - name: Enables port 8080 through the firewall
+       command: ufw allow 8080

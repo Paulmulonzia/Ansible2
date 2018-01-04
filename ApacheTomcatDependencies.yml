@@ -1,0 +1,58 @@
+---
+- hosts: 127.0.0.1
+  tasks:
+     - name: Installs Java
+       remote_user: ubuntu
+       become: true
+       become_user: root
+       apt: pkg=default-jdk state=installed update_cache=true
+
+
+     - name: Installs libaprutil1-dev Apache Dependency
+       remote_user: ubuntu
+       become: true
+       become_user: root
+       apt: pkg=libaprutil1-dev state=installed update_cache=true
+
+
+     - name: Installs libapr1-dev Apache Dependency
+       remote_user: ubuntu
+       become: true
+       become_user: root
+       apt: pkg=libapr1-dev state=installed update_cache=true
+
+
+     - name: Installs gcc Apache dependency
+       remote_user: ubuntu
+       become: true
+       become_user: root
+       apt: pkg=gcc state=installed update_cache=true
+
+     - name: Installs g++ Apache dependency
+       remote_user: ubuntu
+       become: true
+       become_user: root
+       apt: pkg=g++ state=installed update_cache=true
+
+
+     - name: Installs libpcre3 Apache Dependency
+       remote_user: ubuntu
+       become: true
+       become_user: root
+       apt: pkg=libpcre3 state=installed update_cache=true
+
+
+     - name: Installs libpcre3-dev Apache Dependency
+       remote_user: ubuntu
+       become: true
+       become_user: root
+       apt: pkg=libpcre3-dev state=installed update_cache=true
+
+
+
+     - name: Installs make
+       remote_user: ubuntu
+       become: true
+       become_user: root
+       apt: pkg=make state=installed update_cache=true
+
