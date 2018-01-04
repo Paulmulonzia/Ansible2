@@ -38,7 +38,7 @@
 
      - name: Download Mod_Jk Installation Package
        get_url:
-          url: http://mirrors.ibiblio.org/apache/tomcat/tomcat-connectors/jk/tomcat-connectors-1.2.42-src.tar.gz
+          url: http://www-eu.apache.org/dist/tomcat/tomcat-connectors/jk/tomcat-connectors-1.2.42-src.tar.gz
           dest: /home/ubuntu
 
      - name: Unarchive Mod_jk Package

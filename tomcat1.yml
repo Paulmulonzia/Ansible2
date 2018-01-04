@@ -3,17 +3,17 @@
   tasks:
      - name: Download Tomcat Installation Package
        get_url:
-          url: http://www-us.apache.org/dist/tomcat/tomcat-8/v8.5.23/bin/apache-tomcat-8.5.23.tar.gz
+          url: http://www-us.apache.org/dist/tomcat/tomcat-8/v8.5.24/bin/apache-tomcat-8.5.24.tar.gz
           dest: /opt
 
      - name: Unarchive Tomcat Package
        unarchive:
-         src: /opt/apache-tomcat-8.5.23.tar.gz
+         src: /opt/apache-tomcat-8.5.24.tar.gz
          dest: /opt/
          remote_src: yes
  
      - name: Renames Tomcat Folder
-       command: mv /opt/apache-tomcat-8.5.23 /opt/tomcat
+       command: mv /opt/apache-tomcat-8.5.24 /opt/tomcat
 
      - file: 
          path: /opt/tomcat
