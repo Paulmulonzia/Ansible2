@@ -3,9 +3,13 @@
   gather_facts: no
   tasks:
      - stat:
-         path: /path/dspace
+         path: /path/dspace4
        register: t
 
+     - name: create directory
+       file: path=/dspace4 state=directory owner=dspace recurse=yes
+       when: t.stat.isdir is not defined
+       
      - name: Second Dspace Change dspace installation directory in /dspace-source/dspace-5.6-src-release/build.properties
        replace:
          dest: /dspace-source/dspace-5.6-src-release/build.properties
