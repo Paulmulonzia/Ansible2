@@ -1,0 +1,10 @@
+---
+- hosts: 127.0.0.1
+  tasks: 
+     - group:
+         name: tomcat
+         state: present
+
+     - user:
+         name: tomcat
+         groups: tomcat
