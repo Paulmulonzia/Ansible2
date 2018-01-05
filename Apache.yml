@@ -122,7 +122,6 @@
 
             LoadModule rewrite_module modules/mod_rewrite.so            
 
-            Listen 80
             NameVirtualHost *:80
             <VirtualHost *:80>
               ServerName ansible.dddke.net
