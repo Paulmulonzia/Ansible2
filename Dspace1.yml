@@ -34,7 +34,13 @@
          regexp: 'db.url=jdbc:postgresql://localhost:5432/dspace'
          replace: '{{dspacedburl}}'
        when: p.stat.isdir is not defined
-       
+     
+     - name: Replace database password in build.properties
+       replace:
+         dest: /dspace-source/dspace-5.6-src-release/build.properties
+         regexp: 'db.password=dspace'
+         replace: 'db.password=dspace12'
+
      - name: Build the project with maven
        command: mvn -U package chdir=/dspace-source/dspace-5.6-src-release
        ignore_errors: yes
