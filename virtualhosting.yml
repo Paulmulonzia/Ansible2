@@ -101,11 +101,6 @@
               JkMount  /xmlui* tomcat4
             </VirtualHost>
 
-            JkMount  /xmlui* tomcat
-            JkMount  /xmlui* tomcat1
-            JkMount  /xmlui* tomcat2
-            JkMount  /xmlui* tomcat3
-            JkMount  /xmlui* tomcat4
 
      - name: delete the ansible marker at beginning of file
        lineinfile:
